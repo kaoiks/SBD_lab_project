@@ -28,15 +28,30 @@ class CreateVehicleSerializer(serializers.ModelSerializer):
 
 class VehicleSerializer(serializers.ModelSerializer):
     repairs = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    insurances = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     # vin = serializers.CharField(required=True, allow_null=False, allow_blank=False)
     # year_of_production = serializers.IntegerField(required=True)
     # car_review = serializers.DateField()
     # fuel_usage = serializers.FloatField(required=True)
     # kilometers_done = serializers.IntegerField(required=True)
-    #repairs = serializers.PrimaryKeyRelatedField(many=True, read_only=True, allow_null=True)
+    # repairs = serializers.PrimaryKeyRelatedField(many=True, read_only=True, allow_null=True)
 
     class Meta:
         model = models.Vehicle
+        fields = '__all__'
+
+
+class InsuranceSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        return data
+
+    def create(self, validated_data):
+        insurance = models.Insurance.objects.create(**validated_data)  # saving post object
+        return insurance
+
+    class Meta:
+        model = models.Insurance
         fields = '__all__'
 
 
@@ -56,6 +71,29 @@ class RepairSerializer(serializers.ModelSerializer):
 
 
 class CostSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(max_digits=64, decimal_places=2)
+
+    def validate(self, data):
+        return data
+
+    def create(self, validated_data):
+        cost = models.Cost.objects.create(**validated_data)  # saving post object
+        return cost
+
     class Meta:
         model = models.Cost
+        fields = '__all__'
+
+
+class RouteSerializer(serializers.ModelSerializer):
+
+    def validate(self, data):
+        return data
+
+    def create(self, validated_data):
+        route = models.Route.objects.create(**validated_data)  # saving post object
+        return route
+
+    class Meta:
+        model = models.Route
         fields = '__all__'

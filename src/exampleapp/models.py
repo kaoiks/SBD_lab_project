@@ -30,15 +30,24 @@ class Repair(models.Model):
 class Cost(models.Model):
     repair = models.ForeignKey(Repair, related_name='repair_costs', on_delete=models.CASCADE)
     date = models.DateField()
-    invoice_id = models.CharField(max_length=100)
+    invoice_id = models.CharField(max_length=100, unique=True)
     amount = models.FloatField()
 
 
 class Insurance(models.Model):
+    vehicle = models.ForeignKey(Vehicle, related_name='insurances', default=None, on_delete=models.CASCADE)
     insurance_number = models.TextField(primary_key=True, unique=True)
     start_date = models.DateField()
     end_date = models.DateField()
     amount = models.FloatField()
+
+
+class Route(models.Model):
+    route_id = models.AutoField(primary_key=True)
+    date = models.DateField()
+    begin = models.CharField(max_length=100)
+    end = models.CharField(max_length=100)
+    distance = models.IntegerField()
 
 
 class Address(models.Model):

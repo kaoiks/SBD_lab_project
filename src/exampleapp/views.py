@@ -44,33 +44,6 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(task_serializer.data, status=status.HTTP_200_OK)
 
 
-# class RepairViewSet(viewsets.ModelViewSet):
-#     serializer_class = serializers.RepairSerializer
-#     # permission_classes = (IsAuthenticated,)
-#     queryset = models.Repair.objects.all()
-#
-#     def create(self, request):
-#         task_serializer = serializers.RepairSerializer(data=request.data)
-#         task_serializer.is_valid(raise_exception=True)
-#
-#         logging.info("Creating repair")
-#
-#         repair = models.Repair()
-#         repair.description = request.data.get("description")
-#         repair.repair_date = request.data.get("repair_date")
-#         repair.vehicle = request.data.get("vin")
-#         repair.save()
-#         logging.info("Repair created")
-#
-#         return Response({'msg': 'Repair created'}, status=status.HTTP_201_CREATED)
-#
-#     def list(self, request):
-#         qs = models.Repair.objects.all()
-#         repair_serializer = serializers.RepairSerializer(qs, many=True)
-#
-#         return Response(repair_serializer.data, status=status.HTTP_200_OK)
-
-
 class VehicleViewSet(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticated,)
     queryset = models.Vehicle.objects.all()
@@ -114,13 +87,50 @@ class VehicleViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Vehicle has been deleted successfully'}, status=status.HTTP_200_OK)
 
 
+class InsuranceViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Insurance.objects.all()
+    serializer_class = serializers.InsuranceSerializer
+
+    def create(self, request, *args, **kwargs):
+        queryset = models.Vehicle.objects.all() # NOQA
+        logging.info(f"Checking if vehicle with vin {request.data.get('vin')} exists")
+        vehicle = get_object_or_404(queryset, pk=request.data.get("vin"))
+        data = {
+            'insurance_number': request.data.get('insurance_number'),
+            'start_date': request.data.get('start_date'),
+            'end_date': request.data.get('end_date'),
+            'amount': request.data.get('amount'),
+            'vehicle': vehicle.pk
+        }
+
+        _serializer = self.serializer_class(data=data)
+        if _serializer.is_valid():
+            _serializer.save()
+            return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
+        else:
+            return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Insurance.objects.all() # NOQA
+        insurance_serializer = serializers.InsuranceSerializer(qs, many=True)
+
+        return Response(insurance_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Insurance.objects.all()
+        insurance = get_object_or_404(queryset, pk=pk)
+        insurance.delete()
+        return Response({'message': 'Insurance has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
 class RepairViewSet(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticated,)
     queryset = models.Repair.objects.all()
     serializer_class = serializers.RepairSerializer
 
     def create(self, request, *args, **kwargs):
-        queryset = models.Vehicle.objects.all()
+        queryset = models.Vehicle.objects.all() # NOQA
 
         vehicle = get_object_or_404(queryset, pk=request.data.get("vin"))
         data = {
@@ -135,10 +145,16 @@ class RepairViewSet(viewsets.ModelViewSet):
             return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
 
     def list(self, request, *args, **kwargs):
-        qs = models.Repair.objects.all()
+        qs = models.Repair.objects.all() # NOQA
         repair_serializer = serializers.RepairSerializer(qs, many=True)
 
         return Response(repair_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Repair.objects.all()
+        repair = get_object_or_404(queryset, pk=pk)
+        repair.delete()
+        return Response({'message': 'Repair has been deleted successfully'}, status=status.HTTP_200_OK)
 
 
 class CostViewSet(viewsets.ModelViewSet):
@@ -147,14 +163,8 @@ class CostViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.CostSerializer
 
     def create(self, request, *args, **kwargs):
-        queryset = models.Repair.objects.all()
 
-        repair = get_object_or_404(queryset, pk=request.data.get("vin"))
-        data = {
-            'description': request.data.get('description'),
-            'vehicle': vehicle.pk
-        }
-        _serializer = self.serializer_class(data=data)
+        _serializer = self.serializer_class(data=request.data)
         if _serializer.is_valid():
             _serializer.save()
             return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
@@ -162,7 +172,46 @@ class CostViewSet(viewsets.ModelViewSet):
             return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
 
     def list(self, request, *args, **kwargs):
-        qs = models.Repair.objects.all()
-        repair_serializer = serializers.RepairSerializer(qs, many=True)
+        qs = models.Cost.objects.all()
+        cost_serializer = serializers.CostSerializer(qs, many=True)
 
-        return Response(repair_serializer.data, status=status.HTTP_200_OK)
+        return Response(cost_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Cost.objects.all()
+        cost = get_object_or_404(queryset, pk=pk)
+        cost.delete()
+        return Response({'message': 'Cost has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
+class RouteViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Route.objects.all()
+    serializer_class = serializers.RouteSerializer
+
+    def create(self, request, *args, **kwargs):
+        logging.info("Creating route")
+        _serializer = self.serializer_class(data=request.data)
+        _serializer.is_valid(raise_exception=True)
+        _serializer.save()
+        logging.info("Route created")
+
+        return Response(data=_serializer.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Route.objects.all()
+        route_serializer = serializers.RouteSerializer(qs, many=True)
+
+        return Response(route_serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Vehicle.objects.all()
+        route = get_object_or_404(queryset, pk=pk)
+        _serializer = self.serializer_class(route)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Route.objects.all()
+        route = get_object_or_404(queryset, pk=pk)
+        route.delete()
+        return Response({'message': 'Route has been deleted successfully'}, status=status.HTTP_200_OK)
