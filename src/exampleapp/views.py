@@ -2,7 +2,7 @@ import logging
 
 from exampleapp import models, serializers
 from django.shortcuts import get_object_or_404
-
+from django.core.exceptions import PermissionDenied
 from rest_framework import permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -66,7 +66,7 @@ class VehicleViewSet(viewsets.ModelViewSet):
         vehicle.save()
         logging.info("Vehicle created")
 
-        return Response(data=_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data=self.serializer_class(vehicle).data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
         qs = models.Vehicle.objects.all()
@@ -94,7 +94,7 @@ class InsuranceViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         queryset = models.Vehicle.objects.all() # NOQA
-        logging.info(f"Checking if vehicle with vin {request.data.get('vin')} exists")
+        #logging.info(f"Checking if vehicle with vin {request.data.get('vin')} exists")
         vehicle = get_object_or_404(queryset, pk=request.data.get("vin"))
         data = {
             'insurance_number': request.data.get('insurance_number'),
@@ -184,6 +184,102 @@ class CostViewSet(viewsets.ModelViewSet):
         return Response({'message': 'Cost has been deleted successfully'}, status=status.HTTP_200_OK)
 
 
+class AddressViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Address.objects.all()
+    serializer_class = serializers.AddressSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        _serializer = self.serializer_class(data=request.data)
+        if _serializer.is_valid():
+            _serializer.save()
+            return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
+        else:
+            return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Address.objects.all()
+        address_serializer = serializers.AddressSerializer(qs, many=True)
+
+        return Response(address_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Address.objects.all()
+        cost = get_object_or_404(queryset, pk=pk)
+        cost.delete()
+        return Response({'message': 'Address has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
+class ContractorViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Contractor.objects.all()
+    serializer_class = serializers.ContractorSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        if models.Contractor.objects.filter(nip=request.data.get("nip")):
+            return Response({"message": "Contractor with this NIP exists."}, status=status.HTTP_406_NOT_ACCEPTABLE) # NOQA
+        try:
+            address = models.Address.objects.filter(id=request.data.get("address"))[0]
+            if address.type != "1":
+                return Response({"message": "Address type is not compatible."}, status=status.HTTP_406_NOT_ACCEPTABLE)  # NOQA
+        except Exception: # NOQA
+            return Response({"message": "Address does not exist."}, status=status.HTTP_406_NOT_ACCEPTABLE)  # NOQA
+
+        _serializer = self.serializer_class(data=request.data)
+        if _serializer.is_valid():
+            _serializer.save()
+            return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
+        else:
+            return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Contractor.objects.all()
+        contractor_serializer = serializers.ContractorShowSerializer(qs, many=True)
+
+        return Response(contractor_serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Contractor.objects.all()
+        contractor = get_object_or_404(queryset, pk=pk)
+        _serializer = serializers.ContractorShowSerializer(contractor)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Contractor.objects.all()
+        contractor = get_object_or_404(queryset, pk=pk)
+        contractor.delete()
+        return Response({'message': 'Contractor has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
+class InvoiceViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Invoice.objects.all()
+    serializer_class = serializers.InvoiceSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        _serializer = self.serializer_class(data=request.data)
+        if _serializer.is_valid():
+            _serializer.save()
+            return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
+        else:
+            return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Invoice.objects.all()
+        invoice_serializer = serializers.InvoiceSerializer(qs, many=True)
+
+        return Response(invoice_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Invoice.objects.all()
+        invoice = get_object_or_404(queryset, pk=pk)
+        invoice.delete()
+        return Response({'message': 'Invoice has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
 class RouteViewSet(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticated,)
     queryset = models.Route.objects.all()
@@ -215,3 +311,43 @@ class RouteViewSet(viewsets.ModelViewSet):
         route = get_object_or_404(queryset, pk=pk)
         route.delete()
         return Response({'message': 'Route has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
+class DriverViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Driver.objects.all()
+    serializer_class = serializers.DriverSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        try:
+            address = models.Address.objects.filter(id=request.data.get("address"))[0]
+            if address.type != "2":
+                return Response({"message": "Address type is not compatible."}, status=status.HTTP_406_NOT_ACCEPTABLE)  # NOQA
+        except Exception: # NOQA
+            return Response({"message": "Address does not exist."}, status=status.HTTP_406_NOT_ACCEPTABLE)  # NOQA
+
+        _serializer = self.serializer_class(data=request.data)
+        if _serializer.is_valid():
+            _serializer.save()
+            return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
+        else:
+            return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Driver.objects.all()
+        contractor_serializer = serializers.DriverSerializer(qs, many=True)
+
+        return Response(contractor_serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Driver.objects.all()
+        contractor = get_object_or_404(queryset, pk=pk)
+        _serializer = serializers.DriverSerializer(contractor)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Driver.objects.all()
+        contractor = get_object_or_404(queryset, pk=pk)
+        contractor.delete()
+        return Response({'message': 'Driver has been deleted successfully'}, status=status.HTTP_200_OK)

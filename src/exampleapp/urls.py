@@ -11,6 +11,10 @@ router.register("vehicles/?", views.VehicleViewSet, "vehicle")
 router.register("repairs/?", views.RepairViewSet, "repair")
 router.register('insurances/?', views.InsuranceViewSet, 'insurance')
 router.register('costs/?', views.CostViewSet, 'cost')
+router.register("addresses/?", views.AddressViewSet, "address")
+router.register("contractors/?", views.ContractorViewSet, "contractors")
+router.register("invoices/?", views.InvoiceViewSet, "invoices")
+router.register("drivers/?", views.DriverViewSet, "drivers")
 
 urlpatterns = [
     re_path("", include(router.urls))

@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
 
 class User(models.Model):
@@ -51,13 +53,43 @@ class Route(models.Model):
 
 
 class Address(models.Model):
-    street = models.TextField()
-    postal_code = models.TextField()
+    street = models.CharField(max_length=256)
+    postal_code = models.CharField(max_length=10)
+    city = models.CharField(max_length=140)
+
+    ADDRESS_TYPE_CHOICES = [
+        (1, _('Contractor')),
+        (2, _('Driver'))
+    ]
+    type = models.CharField(choices=ADDRESS_TYPE_CHOICES, max_length=20, null=False, blank=False)
+
+    class Meta:
+        unique_together = (('street', 'postal_code', 'city', 'type'),)
 
 
 class Contractor(models.Model):
-    nip = models.IntegerField()
+    nip = models.CharField(primary_key=True, max_length=10, unique=True)
+    name = models.CharField(max_length=256)
+    country_id = models.CharField(max_length=2)
+    address = models.OneToOneField(Address, related_name='address', null=True, blank=False, on_delete=models.CASCADE)
 
-    country_id = models.TextField(max_length=2)
+    class Meta:
+        unique_together = (('nip', 'address'),)
 
 
+class Invoice(models.Model):
+    contractor = models.ForeignKey(Contractor, related_name='invoices', default=None, on_delete=models.CASCADE)
+    invoice_number = models.CharField(max_length=100, unique=True, blank=False, null=False)
+    date = models.DateField()
+    amount = models.FloatField()
+
+
+class Driver(models.Model):
+    pesel = models.CharField(primary_key=True, max_length=10, unique=True)
+    name = models.CharField(max_length=100)
+    surname = models.CharField(max_length=200)
+    date_of_birth = models.DateField()
+    driver_license_number = models.CharField(max_length=100, unique=True)
+    date_qualification_certificate = models.DateField()
+    date_bhp_course = models.DateField()
+    address = models.ForeignKey(Address, related_name='address_driver', null=True, blank=False, on_delete=models.CASCADE)
