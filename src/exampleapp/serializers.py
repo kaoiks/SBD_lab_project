@@ -181,7 +181,7 @@ class RouteSerializer(serializers.ModelSerializer):
 
 
 class DriverSerializer(serializers.ModelSerializer):
-
+    address = AddressSerializer(read_only=True)
     def validate(self, data):
         return data
 

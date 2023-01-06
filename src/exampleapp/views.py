@@ -230,6 +230,9 @@ class ContractorViewSet(viewsets.ModelViewSet):
         _serializer = self.serializer_class(data=request.data)
         if _serializer.is_valid():
             _serializer.save()
+            queryset = models.Contractor.objects.all()
+            contractor = get_object_or_404(queryset, pk=request.data.get("nip"))
+            _serializer = serializers.ContractorShowSerializer(contractor)
             return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
         else:
             return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
