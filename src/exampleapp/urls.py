@@ -15,6 +15,7 @@ router.register("addresses/?", views.AddressViewSet, "address")
 router.register("contractors/?", views.ContractorViewSet, "contractors")
 router.register("invoices/?", views.InvoiceViewSet, "invoices")
 router.register("drivers/?", views.DriverViewSet, "drivers")
+router.register("settlements/?", views.SettlementViewSet, "settlements")
 
 urlpatterns = [
     re_path("", include(router.urls))

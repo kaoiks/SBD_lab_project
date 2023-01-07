@@ -44,14 +44,6 @@ class Insurance(models.Model):
     amount = models.FloatField()
 
 
-class Route(models.Model):
-    route_id = models.AutoField(primary_key=True)
-    date = models.DateField()
-    begin = models.CharField(max_length=100)
-    end = models.CharField(max_length=100)
-    distance = models.IntegerField()
-
-
 class Address(models.Model):
     street = models.CharField(max_length=256)
     postal_code = models.CharField(max_length=10)
@@ -71,7 +63,7 @@ class Contractor(models.Model):
     nip = models.CharField(primary_key=True, max_length=10, unique=True)
     name = models.CharField(max_length=256)
     country_id = models.CharField(max_length=2)
-    address = models.OneToOneField(Address, related_name='address', null=True, blank=False, on_delete=models.CASCADE)
+    address = models.OneToOneField(Address, related_name='address', null=False, blank=False, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (('nip', 'address'),)
@@ -85,11 +77,35 @@ class Invoice(models.Model):
 
 
 class Driver(models.Model):
-    pesel = models.CharField(primary_key=True, max_length=10, unique=True)
+    pesel = models.CharField(primary_key=True, max_length=11, unique=True)
     name = models.CharField(max_length=100)
     surname = models.CharField(max_length=200)
     date_of_birth = models.DateField()
     driver_license_number = models.CharField(max_length=100, unique=True)
     date_qualification_certificate = models.DateField()
     date_bhp_course = models.DateField()
-    address = models.ForeignKey(Address, related_name='address_driver', null=True, blank=False, on_delete=models.CASCADE)
+    address = models.OneToOneField(Address, related_name='address_driver', null=False, blank=False, on_delete=models.CASCADE)
+
+
+class Route(models.Model):
+    route_id = models.AutoField(primary_key=True)
+    date = models.DateField()
+    begin = models.CharField(max_length=100)
+    end = models.CharField(max_length=100)
+    distance = models.IntegerField()
+    driver = models.ForeignKey(Driver, related_name='driver', null=True, blank=True, on_delete=models.DO_NOTHING)
+    contractor = models.ForeignKey(Contractor, related_name='contractor', null=False, blank=False, on_delete=models.DO_NOTHING)
+    vehicle = models.ForeignKey(Vehicle, related_name='vehicle', on_delete=models.DO_NOTHING)
+
+
+class Settlement(models.Model):
+    month = models.IntegerField()
+    year = models.IntegerField()
+    saturdays = models.IntegerField()
+    days_stationary = models.IntegerField()
+    days_leave = models.IntegerField()
+    rate_for_kilometer = models.FloatField()
+    driver = models.ForeignKey(Driver, related_name='settlements', on_delete=models.DO_NOTHING)
+
+    class Meta:
+        unique_together = (('month', 'year', 'driver'),)

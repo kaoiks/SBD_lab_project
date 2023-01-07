@@ -91,6 +91,12 @@ class VehicleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class VehicleRouteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Vehicle
+        fields = '__all__'
+
+
 class AddressSerializer(serializers.ModelSerializer):
     street = serializers.CharField(max_length=140)
     postal_code = serializers.CharField(max_length=10)
@@ -112,9 +118,25 @@ class AddressSerializer(serializers.ModelSerializer):
         fields = ('id', 'street', 'city', 'postal_code', 'type')
 
 
+
 class InvoiceSerializer(serializers.ModelSerializer):
     amount = serializers.DecimalField(max_digits=64, decimal_places=2)
 
+    def validate(self, data):
+        return data
+
+    def create(self, validated_data):
+        contractor = models.Invoice.objects.create(**validated_data)  # saving post object
+        return contractor
+
+    class Meta:
+        model = models.Invoice
+        fields = '__all__'
+
+
+class InvoiceShowSerializer(serializers.ModelSerializer):
+    amount = serializers.DecimalField(max_digits=64, decimal_places=2)
+    contractor_name = serializers.CharField(source='contractor.name')
     def validate(self, data):
         return data
 
@@ -151,6 +173,15 @@ class ContractorShowSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+
+class ContractorRouteSerializer(serializers.ModelSerializer):
+    address = AddressSerializer(read_only=True)
+
+    class Meta:
+        model = models.Contractor
+        fields = '__all__'
+
+
 class ContractorSerializer(serializers.ModelSerializer):
     nip = serializers.CharField(max_length=10, min_length=10)
 
@@ -166,29 +197,39 @@ class ContractorSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class DriverSerializer(serializers.ModelSerializer):
+    address = AddressSerializer(read_only=True)
+
+    class Meta:
+        model = models.Driver
+        fields = '__all__'
+
+
 class RouteSerializer(serializers.ModelSerializer):
+    driver = DriverSerializer(read_only=True)
+    contractor = ContractorRouteSerializer(read_only=True)
+    vehicle = VehicleRouteSerializer(read_only=True)
 
-    def validate(self, data):
-        return data
-
-    def create(self, validated_data):
-        route = models.Route.objects.create(**validated_data)  # saving post object
-        return route
 
     class Meta:
         model = models.Route
         fields = '__all__'
 
 
-class DriverSerializer(serializers.ModelSerializer):
-    address = AddressSerializer(read_only=True)
-    def validate(self, data):
-        return data
+class SettlementSerializer(serializers.ModelSerializer):
+    driver_settlement = DriverSerializer(read_only=True)
+    #driver_settlement = DriverSerializer(read_only=True)
+    month = serializers.IntegerField(max_value=12, min_value=1)
+    year = serializers.IntegerField(max_value=2030, min_value=2022)
+    days_stationary = serializers.IntegerField(max_value=30)
+    days_leave = serializers.IntegerField(max_value=30)
+    saturdays = serializers.IntegerField(max_value=5)
+    rate_for_kilometer = serializers.DecimalField(max_digits=64, decimal_places=2, coerce_to_string=False)
 
     def create(self, validated_data):
-        contractor = models.Driver.objects.create(**validated_data)  # saving post object
-        return contractor
+        settlement = models.Settlement.objects.create(**validated_data)  # saving post object
+        return settlement
 
     class Meta:
-        model = models.Driver
+        model = models.Settlement
         fields = '__all__'

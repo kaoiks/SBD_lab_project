@@ -117,6 +117,12 @@ class InsuranceViewSet(viewsets.ModelViewSet):
 
         return Response(insurance_serializer.data, status=status.HTTP_200_OK)
 
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Insurance.objects.all()
+        insurance = get_object_or_404(queryset, pk=pk)
+        _serializer = self.serializer_class(insurance)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
     def destroy(self, request, pk=None, *args, **kwargs):
         queryset = models.Insurance.objects.all()
         insurance = get_object_or_404(queryset, pk=pk)
@@ -150,6 +156,13 @@ class RepairViewSet(viewsets.ModelViewSet):
 
         return Response(repair_serializer.data, status=status.HTTP_200_OK)
 
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Repair.objects.all()
+        repair = get_object_or_404(queryset, pk=pk)
+        _serializer = serializers.RepairSerializer(repair)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
+
     def destroy(self, request, pk=None, *args, **kwargs):
         queryset = models.Repair.objects.all()
         repair = get_object_or_404(queryset, pk=pk)
@@ -177,6 +190,12 @@ class CostViewSet(viewsets.ModelViewSet):
 
         return Response(cost_serializer.data, status=status.HTTP_200_OK)
 
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Cost.objects.all()
+        cost = get_object_or_404(queryset, pk=pk)
+        _serializer = self.serializer_class(cost)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
     def destroy(self, request, pk=None, *args, **kwargs):
         queryset = models.Cost.objects.all()
         cost = get_object_or_404(queryset, pk=pk)
@@ -203,6 +222,12 @@ class AddressViewSet(viewsets.ModelViewSet):
         address_serializer = serializers.AddressSerializer(qs, many=True)
 
         return Response(address_serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Address.objects.all()
+        address = get_object_or_404(queryset, pk=pk)
+        _serializer = self.serializer_class(address)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None, *args, **kwargs):
         queryset = models.Address.objects.all()
@@ -272,48 +297,21 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         qs = models.Invoice.objects.all()
-        invoice_serializer = serializers.InvoiceSerializer(qs, many=True)
+        invoice_serializer = serializers.InvoiceShowSerializer(qs, many=True)
 
         return Response(invoice_serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Invoice.objects.all()
+        invoice = get_object_or_404(queryset, pk=pk)
+        _serializer = self.serializer_class(invoice)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None, *args, **kwargs):
         queryset = models.Invoice.objects.all()
         invoice = get_object_or_404(queryset, pk=pk)
         invoice.delete()
         return Response({'message': 'Invoice has been deleted successfully'}, status=status.HTTP_200_OK)
-
-
-class RouteViewSet(viewsets.ModelViewSet):
-    # permission_classes = (IsAuthenticated,)
-    queryset = models.Route.objects.all()
-    serializer_class = serializers.RouteSerializer
-
-    def create(self, request, *args, **kwargs):
-        logging.info("Creating route")
-        _serializer = self.serializer_class(data=request.data)
-        _serializer.is_valid(raise_exception=True)
-        _serializer.save()
-        logging.info("Route created")
-
-        return Response(data=_serializer.data, status=status.HTTP_201_CREATED)
-
-    def list(self, request, *args, **kwargs):
-        qs = models.Route.objects.all()
-        route_serializer = serializers.RouteSerializer(qs, many=True)
-
-        return Response(route_serializer.data, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, pk=None, *args, **kwargs):
-        queryset = models.Vehicle.objects.all()
-        route = get_object_or_404(queryset, pk=pk)
-        _serializer = self.serializer_class(route)
-        return Response(data=_serializer.data, status=status.HTTP_200_OK)
-
-    def destroy(self, request, pk=None, *args, **kwargs):
-        queryset = models.Route.objects.all()
-        route = get_object_or_404(queryset, pk=pk)
-        route.delete()
-        return Response({'message': 'Route has been deleted successfully'}, status=status.HTTP_200_OK)
 
 
 class DriverViewSet(viewsets.ModelViewSet):
@@ -339,18 +337,101 @@ class DriverViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         qs = models.Driver.objects.all()
-        contractor_serializer = serializers.DriverSerializer(qs, many=True)
+        driver_serializer = serializers.DriverSerializer(qs, many=True)
 
-        return Response(contractor_serializer.data, status=status.HTTP_200_OK)
+        return Response(driver_serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None, *args, **kwargs):
         queryset = models.Driver.objects.all()
-        contractor = get_object_or_404(queryset, pk=pk)
-        _serializer = serializers.DriverSerializer(contractor)
+        driver = get_object_or_404(queryset, pk=pk)
+        _serializer = serializers.DriverSerializer(driver)
         return Response(data=_serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None, *args, **kwargs):
         queryset = models.Driver.objects.all()
-        contractor = get_object_or_404(queryset, pk=pk)
-        contractor.delete()
+        driver = get_object_or_404(queryset, pk=pk)
+        driver.delete()
         return Response({'message': 'Driver has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
+class RouteViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Route.objects.all()
+    serializer_class = serializers.RouteSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        _serializer = self.serializer_class(data=request.data)
+        _serializer.is_valid(raise_exception=True)
+
+        logging.info("Creating route")
+
+        route = models.Route()
+        route.date = request.data.get("date")
+        route.begin = request.data.get("begin")
+        route.end = request.data.get("end")
+        route.distance = request.data.get("distance")
+        queryset = models.Driver.objects.all()
+        try:
+            route.driver = get_object_or_404(queryset, pk=request.data.get("driver"))
+        except Exception:
+            route.driver = None
+        queryset = models.Contractor.objects.all()
+        route.contractor = get_object_or_404(queryset, pk=request.data.get("contractor"))
+        queryset = models.Vehicle.objects.all()
+        route.vehicle = get_object_or_404(queryset, pk=request.data.get("vehicle"))
+        route.save()
+        logging.info("Route created")
+
+        return Response(data=self.serializer_class(route).data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Route.objects.all()
+        route_serializer = serializers.RouteSerializer(qs, many=True)
+
+        return Response(route_serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Route.objects.all()
+        route = get_object_or_404(queryset, pk=pk)
+        _serializer = self.serializer_class(route)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Route.objects.all()
+        route = get_object_or_404(queryset, pk=pk)
+        route.delete()
+        return Response({'message': 'Route has been deleted successfully'}, status=status.HTTP_200_OK)
+
+
+class SettlementViewSet(viewsets.ModelViewSet):
+    # permission_classes = (IsAuthenticated,)
+    queryset = models.Settlement.objects.all()
+    serializer_class = serializers.SettlementSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        _serializer = self.serializer_class(data=request.data)
+        if _serializer.is_valid(raise_exception=True):
+            _serializer.save()
+            return Response(data=_serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
+
+    def list(self, request, *args, **kwargs):
+        qs = models.Settlement.objects.all()
+        route_serializer = serializers.SettlementSerializer(qs, many=True)
+
+        return Response(route_serializer.data, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        queryset = models.Settlement.objects.all()
+        route = get_object_or_404(queryset, pk=pk)
+        _serializer = self.serializer_class(route)
+        return Response(data=_serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, pk=None, *args, **kwargs):
+        queryset = models.Settlement.objects.all()
+        settlement = get_object_or_404(queryset, pk=pk)
+        settlement.delete()
+        return Response({'message': 'Settlement has been deleted successfully'}, status=status.HTTP_200_OK)
