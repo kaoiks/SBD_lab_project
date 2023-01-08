@@ -105,6 +105,7 @@ class Settlement(models.Model):
     days_stationary = models.IntegerField()
     days_leave = models.IntegerField()
     rate_for_kilometer = models.FloatField()
+    kilometers_done = models.IntegerField()
     driver = models.ForeignKey(Driver, related_name='settlements', on_delete=models.DO_NOTHING)
 
     class Meta:

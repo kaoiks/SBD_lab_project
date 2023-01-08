@@ -320,7 +320,7 @@ class DriverViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.DriverSerializer
 
     def create(self, request, *args, **kwargs):
-
+        #print(request.data.get("address"))
         try:
             address = models.Address.objects.filter(id=request.data.get("address"))[0]
             if address.type != "2":
@@ -328,7 +328,7 @@ class DriverViewSet(viewsets.ModelViewSet):
         except Exception: # NOQA
             return Response({"message": "Address does not exist."}, status=status.HTTP_406_NOT_ACCEPTABLE)  # NOQA
 
-        _serializer = self.serializer_class(data=request.data)
+        _serializer = serializers.DriverCreateSerializer(data=request.data)
         if _serializer.is_valid():
             _serializer.save()
             return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
@@ -350,9 +350,11 @@ class DriverViewSet(viewsets.ModelViewSet):
     def destroy(self, request, pk=None, *args, **kwargs):
         queryset = models.Driver.objects.all()
         driver = get_object_or_404(queryset, pk=pk)
-        driver.delete()
-        return Response({'message': 'Driver has been deleted successfully'}, status=status.HTTP_200_OK)
-
+        try:
+            driver.delete()
+            return Response({'message': 'Driver has been deleted successfully'}, status=status.HTTP_200_OK)
+        except Exception:
+            return Response({'message': 'Driver can\'t be deleted'}, status=status.HTTP_403_FORBIDDEN)
 
 class RouteViewSet(viewsets.ModelViewSet):
     # permission_classes = (IsAuthenticated,)
@@ -386,10 +388,18 @@ class RouteViewSet(viewsets.ModelViewSet):
         return Response(data=self.serializer_class(route).data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
-        qs = models.Route.objects.all()
-        route_serializer = serializers.RouteSerializer(qs, many=True)
+        month = self.request.query_params.get('month')
+        year = self.request.query_params.get('year')
+        pesel = self.request.query_params.get('driver')
 
-        return Response(route_serializer.data, status=status.HTTP_200_OK)
+        if month is None or year is None or pesel is None:
+            qs = models.Route.objects.all()
+            route_serializer = serializers.RouteSerializer(qs, many=True)
+            return Response(route_serializer.data, status=status.HTTP_200_OK)
+        else:
+            qs = models.Route.objects.filter(date__year=year, date__month=month, driver__pesel=pesel)
+            route_serializer = serializers.RouteSerializer(qs, many=True)
+            return Response(route_serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None, *args, **kwargs):
         queryset = models.Route.objects.all()
@@ -402,6 +412,12 @@ class RouteViewSet(viewsets.ModelViewSet):
         route = get_object_or_404(queryset, pk=pk)
         route.delete()
         return Response({'message': 'Route has been deleted successfully'}, status=status.HTTP_200_OK)
+
+    # @action(methods=['get'], detail=False)
+    # def me(self, request):
+    #     serializer = self.get_serializer_class()
+    #     data = serializer(request.user).data
+    #     return Response(data, status=status.HTTP_200_OK)
 
 
 class SettlementViewSet(viewsets.ModelViewSet):

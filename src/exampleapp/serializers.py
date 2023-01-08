@@ -197,6 +197,19 @@ class ContractorSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class DriverCreateSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        return data
+
+    def create(self, validated_data):
+        contractor = models.Driver.objects.create(**validated_data)  # saving post object
+        return contractor
+
+    class Meta:
+        model = models.Driver
+        fields = '__all__'
+
+
 class DriverSerializer(serializers.ModelSerializer):
     address = AddressSerializer(read_only=True)
 
