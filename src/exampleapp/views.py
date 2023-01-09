@@ -304,7 +304,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, pk=None, *args, **kwargs):
         queryset = models.Invoice.objects.all()
         invoice = get_object_or_404(queryset, pk=pk)
-        _serializer = self.serializer_class(invoice)
+        _serializer = serializers.InvoiceShowSerializer(invoice)
         return Response(data=_serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None, *args, **kwargs):
@@ -331,6 +331,9 @@ class DriverViewSet(viewsets.ModelViewSet):
         _serializer = serializers.DriverCreateSerializer(data=request.data)
         if _serializer.is_valid():
             _serializer.save()
+            queryset = models.Driver.objects.all()
+            contractor = get_object_or_404(queryset, pk=request.data.get("pesel"))
+            _serializer = serializers.DriverSerializer(contractor)
             return Response(data=_serializer.data, status=status.HTTP_201_CREATED)  # NOQA
         else:
             return Response(data=_serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # NOQA
