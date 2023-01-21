@@ -120,7 +120,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
 
 class InvoiceSerializer(serializers.ModelSerializer):
-    amount = serializers.DecimalField(max_digits=64, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=64, decimal_places=2, coerce_to_string=False)
 
     def validate(self, data):
         return data
@@ -135,7 +135,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
 
 class InvoiceShowSerializer(serializers.ModelSerializer):
-    amount = serializers.DecimalField(max_digits=64, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=64, decimal_places=2, coerce_to_string=False)
     contractor_name = serializers.CharField(source='contractor.name')
     def validate(self, data):
         return data
